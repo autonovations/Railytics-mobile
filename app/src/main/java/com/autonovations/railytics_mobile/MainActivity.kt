@@ -6,8 +6,10 @@ import android.os.Bundle
 import android.view.ViewGroup
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.WebViewAssetLoader
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -44,7 +46,7 @@ class MainActivity : ComponentActivity() {
                     containerColor = ComposeColor(0xFFFFAD01)
                 ) { innerPadding ->
                     WebViewApp(
-                        url = "https://railytics-union-pacific-913941087.development.catalystserverless.com/app/index.html",
+                        url = "https://appassets.androidplatform.net/assets/railytics.html",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -104,6 +106,10 @@ fun WebViewApp(url: String, modifier: Modifier = Modifier) {
         AndroidView(
             modifier = modifier,
             factory = { context ->
+                val assetLoader = WebViewAssetLoader.Builder()
+                    .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
+                    .build()
+
                 WebView(context).apply {
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -112,6 +118,13 @@ fun WebViewApp(url: String, modifier: Modifier = Modifier) {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
                     webViewClient = object : WebViewClient() {
+                        override fun shouldInterceptRequest(
+                            view: WebView?,
+                            request: WebResourceRequest?
+                        ): WebResourceResponse? {
+                            return request?.let { assetLoader.shouldInterceptRequest(it.url) }
+                        }
+
                         override fun onReceivedError(
                             view: WebView?,
                             request: WebResourceRequest?,
