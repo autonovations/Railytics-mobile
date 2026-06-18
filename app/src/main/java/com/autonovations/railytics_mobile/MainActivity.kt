@@ -117,6 +117,7 @@ fun WebViewApp(url: String, modifier: Modifier = Modifier) {
                     )
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
+                    settings.mediaPlaybackRequiresUserGesture = false
                     webViewClient = object : WebViewClient() {
                         override fun shouldInterceptRequest(
                             view: WebView?,
