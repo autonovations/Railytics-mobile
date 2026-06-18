@@ -2620,7 +2620,7 @@
         d.setMinutes(d.getMinutes() - i * 3);
         const hasTrain = Math.random() > 0.3;
         simFrames.push({
-          filename: './train_frame' + ((i % 3) + 1) + '.png',
+          filename: './train_frame' + ((i % 6) + 1) + '.png',
           timestamp: d.toISOString(),
           size: Math.floor(Math.random() * 500000) + 50000,
           has_trains: hasTrain,
@@ -2972,7 +2972,7 @@
 
       // Asignar imagen cíclicamente basándose en el ID del evento o nombre para consistencia
       const hash = eventId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const imgIdx = (hash % 3) + 1;
+      const imgIdx = (hash % 6) + 1;
       imgEl.src = './train_frame' + imgIdx + '.png';
 
       const fmt = ts => { try { return new Date(ts).toLocaleString(); } catch (_) { return '—'; } };
@@ -3593,7 +3593,7 @@
       el.innerHTML = '<div class="table-responsive"><table><tr><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">schedule</span> Start</span></th><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">schedule</span> End</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">access_time</span> Duration</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">train</span> Frames</span></th><th style="text-align:center">Units</th><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">badge</span> Reporting Marks</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">image</span> Last Detection</span></th><th style="text-align:center">Video</th><th style="text-align:center">Action</th></tr>' + events.slice(0, 50).map((e, idx) => {
         const stream = SIM_STREAMS.find(st => st.name === e.stream_name);
         const videoClickHtml = stream ? 'onclick="openViewer(\'' + stream.url + '\',\'' + stream.name.replace(/'/g, "\\'") + '\')"' : 'disabled';
-        const imgPath = './train_frame' + ((idx % 3) + 1) + '.png';
+        const imgPath = './train_frame' + ((idx % 6) + 1) + '.png';
         return '<tr style="transition:.2s">' +
           '<td data-label="Start"><div class="td-content">' + fmt(e.start_time) + '</div></td>' +
           '<td data-label="End"><div class="td-content">' + (e.end_time ? fmt(e.end_time) : '— (active)') + '</div></td>' +
