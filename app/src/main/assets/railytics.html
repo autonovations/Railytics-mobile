@@ -672,8 +672,10 @@
       border: 1px solid rgba(255, 173, 1, .2);
       border-radius: 12px;
       padding: 24px;
+      width: 100%;
       max-width: 520px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, .3)
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .3);
+      box-sizing: border-box;
     }
 
     .calendar .cal-header {
@@ -1839,6 +1841,11 @@
         padding: 5px 12px;
         font-size: .8rem
       }
+
+      .header .logo {
+        height: 32px;
+        max-width: 25%
+      }
     }
 
     /* ═══════════════ SETTINGS TOGGLE SWITCH ═══════════════ */
@@ -1894,6 +1901,86 @@
       background: rgba(255, 193, 7, 0.05) !important;
       border-color: rgba(255, 193, 7, 0.3) !important;
       box-shadow: 0 4px 15px rgba(255, 176, 0, 0.05);
+    }
+
+    /* ═══════════════ RESPONSIVE TABLE CARDS ═══════════════ */
+    @media (max-width: 899px) {
+      .table-responsive table {
+        border: none;
+      }
+
+      .table-responsive thead,
+      .table-responsive tbody,
+      .table-responsive tr,
+      .table-responsive th,
+      .table-responsive td {
+        display: block;
+        width: 100%;
+      }
+
+      /* Hide standard header row */
+      .table-responsive th,
+      .table-responsive tr:first-child:not(:only-child) {
+        display: none !important;
+      }
+
+      .table-responsive tr {
+        background: rgba(255, 176, 0, 0.03);
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        border-left: 5px solid #FFB000;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        padding: 12px;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+      }
+
+      .table-responsive tr:hover {
+        background: rgba(255, 176, 0, 0.08);
+        box-shadow: 0 4px 16px rgba(255, 176, 0, 0.2);
+      }
+
+      .table-responsive td {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 6px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        text-align: right;
+        font-size: 0.85rem;
+        box-sizing: border-box;
+        min-height: 40px;
+      }
+
+      .table-responsive td:last-child {
+        border-bottom: none;
+      }
+
+      .table-responsive td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #FFB000;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+        margin-right: 16px;
+        text-align: left;
+        flex-shrink: 0;
+      }
+
+      /* Alignment helper for mobile cell contents */
+      .table-responsive td .td-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        text-align: right;
+        width: auto;
+      }
+
+      .table-responsive td .td-content.row-layout {
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+      }
     }
   </style>
 </head>
@@ -2493,7 +2580,7 @@
         return;
       }
       const fmtDur = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60; return h > 0 ? h + 'h ' + m + 'm ' + sec + 's' : m > 0 ? m + 'm ' + sec + 's' : sec + 's'; };
-      el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="font-weight:600">📊 Active Stream Analysis (' + simSessions.length + ')</h3><button class="btn btn-outline btn-sm" onclick="renderMultiStream()">Refresh</button></div><div class="table-responsive"><table><tr><th>Stream</th><th>Status</th><th>Runtime</th><th>Metrics</th><th>Detection Rate</th><th>Actions</th></tr>' + simSessions.map(s => '<tr><td><strong>' + s.stream_name + '</strong><br/><span style="color:#777;font-size:.75rem">ID: ' + s.stream_id + '</span></td><td><span class="chip ' + (s.active ? 'success' : 'error') + '"><span class="material-icons" style="font-size:.7rem">' + (s.active ? 'play_arrow' : 'stop') + '</span> ' + (s.active ? 'Running' : 'Stopped') + '</span></td><td><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem;color:#aaa">schedule</span>' + fmtDur(s.runtime_seconds || 0) + '</span></td><td><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:.8rem;color:#aaa"><span class="material-icons" style="font-size:.8rem;color:#FFC107;vertical-align:middle">analytics</span> Frames: <strong>' + (s.frames_processed || 0).toLocaleString() + '</strong></span><span style="font-size:.8rem;color:#aaa"><span class="material-icons" style="font-size:.8rem;color:#4CAF50;vertical-align:middle">train</span> Trains: <strong>' + (s.trains_detected || 0).toLocaleString() + '</strong></span></div></td><td><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="material-icons" style="font-size:1rem;color:#aaa">speed</span><strong>' + (s.detection_rate || 0) + '%</strong></div><div style="background:rgba(255,255,255,.1);height:6px;border-radius:3px;width:80px"><div style="background:' + (s.detection_rate > 20 ? '#4CAF50' : s.detection_rate > 10 ? '#ff9800' : '#f44336') + ';height:100%;border-radius:3px;width:' + Math.min(s.detection_rate || 0, 100) + '%;transition:.5s"></div></div></td><td><div style="display:flex;gap:4px"><button class="btn btn-outline btn-sm" onclick="openViewer(\'' + (SIM_STREAMS.find(st => st.id === s.stream_id)?.url || '') + '\',\'' + s.stream_name.replace(/'/g, "\\'") + '\')" title="View Stream"><span class="material-icons" style="font-size:1rem">visibility</span></button><button class="btn btn-error btn-sm" onclick="stopStream(\'' + s.stream_id + '\');renderMultiStream()"><span class="material-icons" style="font-size:1rem">stop</span></button></div></td></tr>').join('') + '</table></div>';
+      el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="font-weight:600">📊 Active Stream Analysis (' + simSessions.length + ')</h3><button class="btn btn-outline btn-sm" onclick="renderMultiStream()">Refresh</button></div><div class="table-responsive"><table><tr><th>Stream</th><th>Status</th><th>Runtime</th><th>Metrics</th><th>Detection Rate</th><th>Actions</th></tr>' + simSessions.map(s => '<tr><td data-label="Stream"><div class="td-content" style="align-items: flex-start; text-align: left;"><strong>' + s.stream_name + '</strong><br/><span style="color:#777;font-size:.75rem">ID: ' + s.stream_id + '</span></div></td><td data-label="Status"><div class="td-content"><span class="chip ' + (s.active ? 'success' : 'error') + '"><span class="material-icons" style="font-size:.7rem">' + (s.active ? 'play_arrow' : 'stop') + '</span> ' + (s.active ? 'Running' : 'Stopped') + '</span></div></td><td data-label="Runtime"><div class="td-content"><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem;color:#aaa">schedule</span>' + fmtDur(s.runtime_seconds || 0) + '</span></div></td><td data-label="Metrics"><div class="td-content"><div style="display:flex;flex-direction:column;gap:4px;align-items:inherit;"><span style="font-size:.8rem;color:#aaa"><span class="material-icons" style="font-size:.8rem;color:#FFC107;vertical-align:middle">analytics</span> Frames: <strong>' + (s.frames_processed || 0).toLocaleString() + '</strong></span><span style="font-size:.8rem;color:#aaa"><span class="material-icons" style="font-size:.8rem;color:#4CAF50;vertical-align:middle">train</span> Trains: <strong>' + (s.trains_detected || 0).toLocaleString() + '</strong></span></div></div></td><td data-label="Detection Rate"><div class="td-content"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="material-icons" style="font-size:1rem;color:#aaa">speed</span><strong>' + (s.detection_rate || 0) + '%</strong></div><div style="background:rgba(255,255,255,.1);height:6px;border-radius:3px;width:80px"><div style="background:' + (s.detection_rate > 20 ? '#4CAF50' : s.detection_rate > 10 ? '#ff9800' : '#f44336') + ';height:100%;border-radius:3px;width:' + Math.min(s.detection_rate || 0, 100) + '%;transition:.5s"></div></div></div></td><td data-label="Actions"><div class="td-content"><div style="display:flex;gap:4px"><button class="btn btn-outline btn-sm" onclick="openViewer(\'' + (SIM_STREAMS.find(st => st.id === s.stream_id)?.url || '') + '\',\'' + s.stream_name.replace(/'/g, "\\'") + '\')" title="View Stream"><span class="material-icons" style="font-size:1rem">visibility</span></button><button class="btn btn-error btn-sm" onclick="stopStream(\'' + s.stream_id + '\');renderMultiStream()"><span class="material-icons" style="font-size:1rem">stop</span></button></div></div></td></tr>').join('') + '</table></div>';
     }
 
     /* ═══════════════ ANALYTICS ═══════════════ */
@@ -3001,7 +3088,7 @@
       el.innerHTML = '<div class="table-responsive"><table><tr style="background:#1f1f1f"><th style="background:#1f1f1f;color:#FFC107;font-weight:700">⏱ Timestamp</th><th style="background:#1f1f1f;color:#FFC107;font-weight:700">🚩 Reporting Marks</th><th style="background:#1f1f1f;color:#FFC107;font-weight:700">📍 Location</th><th style="background:#1f1f1f;color:#FFC107;font-weight:700">🚂 Units</th><th style="background:#1f1f1f;color:#FFC107;font-weight:700">⏳ Duration</th><th style="background:#1f1f1f;color:#FFC107;font-weight:700;text-align:right">Action</th></tr>' + pageEvents.map(e => {
         const t = new Date(e.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const marks = e.reporting_marks || [];
-        return '<tr style="transition:.2s"><td style="color:#fff;font-weight:500">' + t + '</td><td>' + (marks[0] ? '<span style="color:#FFC107;font-weight:600">' + marks[0] + '</span>' + (marks.length > 1 ? ' <span class="chip primary">+' + (marks.length - 1) + '</span>' : '') : '—') + '</td><td style="color:#64B5F6;font-weight:600">' + (e.stream_name || '—') + '</td><td><span class="chip primary">' + (e.units_count || 0) + '</span></td><td><span class="chip success">' + fmtDur(e.duration_seconds) + '</span></td><td style="text-align:right"><button class="btn btn-warning btn-sm" onclick=""><span class="material-icons" style="font-size:.9rem">search</span> View Details</button></td></tr>';
+        return '<tr style="transition:.2s"><td data-label="Timestamp"><div class="td-content" style="color:#fff;font-weight:500">' + t + '</div></td><td data-label="Reporting Marks"><div class="td-content">' + (marks[0] ? '<span style="color:#FFC107;font-weight:600">' + marks[0] + '</span>' + (marks.length > 1 ? ' <span class="chip primary">+' + (marks.length - 1) + '</span>' : '') : '—') + '</div></td><td data-label="Location"><div class="td-content" style="color:#64B5F6;font-weight:600">' + (e.stream_name || '—') + '</div></td><td data-label="Units"><div class="td-content"><span class="chip primary">' + (e.units_count || 0) + '</span></div></td><td data-label="Duration"><div class="td-content"><span class="chip success">' + fmtDur(e.duration_seconds) + '</span></div></td><td data-label="Action" style="text-align:right"><div class="td-content"><button class="btn btn-warning btn-sm" onclick=""><span class="material-icons" style="font-size:.9rem">search</span> View Details</button></div></td></tr>';
       }).join('') + '</table></div>';
       // Pagination
       if (totalPages > 1) {
@@ -3021,7 +3108,7 @@
       }
       const fmt = ts => { try { return new Date(ts).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); } catch (_) { return '—'; } };
       const fmtDur = s => { if (s == null) return '—'; const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = Math.floor(s % 60); return h > 0 ? h + 'h ' + m + 'm ' + sec + 's' : m > 0 ? m + 'm ' + sec + 's' : sec + 's'; };
-      el.innerHTML = '<div class="table-responsive"><table><tr><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">schedule</span> Start</span></th><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">schedule</span> End</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">access_time</span> Duration</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">train</span> Frames</span></th><th style="text-align:center">Units</th><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">badge</span> Reporting Marks</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">image</span> Last Detection</span></th><th style="text-align:center">Video</th><th style="text-align:center">Action</th></tr>' + events.slice(0, 50).map(e => '<tr style="cursor:pointer;transition:.2s"><td>' + fmt(e.start_time) + '</td><td>' + (e.end_time ? fmt(e.end_time) : '— (active)') + '</td><td style="text-align:center;font-weight:700">' + fmtDur(e.duration_seconds) + '</td><td style="text-align:center">' + (e.frames_count || 0) + '</td><td style="text-align:center">' + (e.units_count || 0) + '</td><td>' + (e.reporting_marks || []).slice(0, 6).map(r => '<span class="chip primary" style="margin:1px">' + r + '</span>').join('') + ((e.reporting_marks || []).length > 6 ? '<span class="chip primary">+' + (e.reporting_marks.length - 6) + '</span>' : '') + '</td><td style="text-align:center"><div style="width:80px;height:50px;background:#1a1a1a;border-radius:4px;border:1px solid rgba(255,193,7,.2);display:flex;align-items:center;justify-content:center;margin:0 auto"><span class="material-icons" style="font-size:1.2rem;color:#555">image</span></div></td><td style="text-align:center"><button class="btn btn-outline btn-sm" title="View event video"><span class="material-icons" style="font-size:1rem">play_arrow</span></button></td><td style="text-align:center"><button class="btn btn-primary btn-sm"><span class="material-icons" style="font-size:.9rem">search</span> View Details</button></td></tr>').join('') + '</table></div>';
+      el.innerHTML = '<div class="table-responsive"><table><tr><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">schedule</span> Start</span></th><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">schedule</span> End</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">access_time</span> Duration</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">train</span> Frames</span></th><th style="text-align:center">Units</th><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">badge</span> Reporting Marks</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">image</span> Last Detection</span></th><th style="text-align:center">Video</th><th style="text-align:center">Action</th></tr>' + events.slice(0, 50).map(e => '<tr style="cursor:pointer;transition:.2s"><td data-label="Start"><div class="td-content">' + fmt(e.start_time) + '</div></td><td data-label="End"><div class="td-content">' + (e.end_time ? fmt(e.end_time) : '— (active)') + '</div></td><td data-label="Duration" style="text-align:center;font-weight:700"><div class="td-content">' + fmtDur(e.duration_seconds) + '</div></td><td data-label="Frames" style="text-align:center"><div class="td-content">' + (e.frames_count || 0) + '</div></td><td data-label="Units" style="text-align:center"><div class="td-content">' + (e.units_count || 0) + '</div></td><td data-label="Reporting Marks"><div class="td-content">' + (e.reporting_marks || []).slice(0, 6).map(r => '<span class="chip primary" style="margin:1px">' + r + '</span>').join('') + ((e.reporting_marks || []).length > 6 ? '<span class="chip primary">+' + (e.reporting_marks.length - 6) + '</span>' : '') + '</div></td><td data-label="Last Detection" style="text-align:center"><div class="td-content"><div style="width:80px;height:50px;background:#1a1a1a;border-radius:4px;border:1px solid rgba(255,193,7,.2);display:flex;align-items:center;justify-content:center;margin:0 auto"><span class="material-icons" style="font-size:1.2rem;color:#555">image</span></div></div></td><td data-label="Video" style="text-align:center"><div class="td-content"><button class="btn btn-outline btn-sm" title="View event video"><span class="material-icons" style="font-size:1rem">play_arrow</span></button></div></td><td data-label="Action" style="text-align:center"><div class="td-content"><button class="btn btn-primary btn-sm"><span class="material-icons" style="font-size:.9rem">search</span> View Details</button></div></td></tr>').join('') + '</table></div>';
     }
 
     /* ═══════════════ FRAME GALLERY ═══════════════ */
