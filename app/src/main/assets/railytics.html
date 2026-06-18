@@ -2021,9 +2021,11 @@
 
     /* YouTube Facade Styles */
     .yt-embed-facade {
-      position: relative;
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
-      padding-bottom: 56.25%; /* 16:9 ratio */
+      height: 100%;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -2154,6 +2156,32 @@
     .btn-video-pause:hover {
       background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
       box-shadow: 0 4px 15px rgba(13, 148, 136, 0.5);
+    }
+
+    /* YouTube Loading Overlay & Spinner */
+    .yt-loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      transition: opacity 0.35s ease-in-out;
+      border-radius: 15px 15px 0 0;
+    }
+
+    .yt-spinner {
+      width: 35px;
+      height: 35px;
+      border: 3px solid rgba(255, 193, 7, 0.2);
+      border-top-color: #FFC107;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
   </style>
 </head>
@@ -2710,7 +2738,31 @@
     function loadLiveStreamIframe(id, url) {
       const container = document.getElementById('embed-container-' + id);
       if (container) {
-        container.innerHTML = '<iframe src="' + embedUrl(url) + '" allow="autoplay;encrypted-media" allowfullscreen></iframe>';
+        // Keep the live badge if present
+        const liveBadge = container.querySelector('.live-badge');
+        const liveBadgeHtml = liveBadge ? liveBadge.outerHTML : '';
+        
+        container.innerHTML = 
+          liveBadgeHtml +
+          '<div class="yt-loading-overlay" id="loading-' + id + '">' +
+            '<div class="yt-spinner"></div>' +
+            '<span style="font-size:0.75rem;font-weight:600;color:#aaa;text-transform:uppercase;margin-top:8px">Loading Stream...</span>' +
+          '</div>' +
+          '<iframe id="iframe-' + id + '" src="' + embedUrl(url) + '" allow="autoplay;encrypted-media" allowfullscreen style="opacity: 0; transition: opacity 0.35s ease-in-out; position: absolute; top:0; left:0; width:100%; height:100%; border:none;" onload="onIframeLoaded(\'' + id + '\')"></iframe>';
+      }
+    }
+
+    function onIframeLoaded(id) {
+      const loader = document.getElementById('loading-' + id);
+      const iframe = document.getElementById('iframe-' + id);
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+          if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 350);
+      }
+      if (iframe) {
+        iframe.style.opacity = '1';
       }
     }
 
