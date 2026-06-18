@@ -335,6 +335,55 @@ table tr:hover{background:rgba(255,193,7,.05)}
   .det-table-header{display:none}
   .det-table-row{grid-template-columns:1fr;gap:8px;text-align:left;border-left-width:4px;padding:12px}
 }
+
+/* ═══════════════ SETTINGS TOGGLE SWITCH ═══════════════ */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #333;
+  transition: .4s;
+  border-radius: 34px;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #aaa;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: rgba(255, 193, 7, 0.2);
+  border-color: #FFC107;
+}
+input:checked + .slider:before {
+  transform: translateX(24px);
+  background-color: #FFC107;
+}
+.settings-row:hover {
+  background: rgba(255, 193, 7, 0.05) !important;
+  border-color: rgba(255, 193, 7, 0.3) !important;
+  box-shadow: 0 4px 15px rgba(255, 176, 0, 0.05);
+}
 </style>
 </head>
 <body>
@@ -356,6 +405,7 @@ table tr:hover{background:rgba(255,193,7,.05)}
   <button class="menu-item" onclick="switchTab(1)"><span class="material-icons">analytics</span>REAL-TIME ANALYSIS</button>
   <button class="menu-item" onclick="switchTab(2)"><span class="material-icons">dashboard</span>DASHBOARD</button>
   <button class="menu-item" onclick="switchTab(3)"><span class="material-icons">photo_library</span>FRAME GALLERY</button>
+  <button class="menu-item" onclick="switchTab(4)"><span class="material-icons">settings</span>SETTINGS</button>
 </nav>
 
 <!-- ═══════════════ CONTENT ═══════════════ -->
@@ -555,6 +605,20 @@ table tr:hover{background:rgba(255,193,7,.05)}
   </div>
 </div>
 
+<!-- ════ TAB 4: SETTINGS ════ -->
+<div class="tab-panel" id="tab4">
+  <div class="card" style="margin-bottom:20px;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+      <h2 style="font-weight:600;display:flex;align-items:center;gap:8px"><span class="material-icons">settings</span> Stream Settings</h2>
+      <button class="btn btn-outline btn-sm" onclick="resetSettings()"><span class="material-icons" style="font-size:1rem">restore</span> Reset Defaults</button>
+    </div>
+    <p style="color:#aaa;font-size:.9rem;margin-bottom:24px">
+      Configure which streams are active. Disabled streams will be hidden from the STREAM SELECTION view, and any running analysis for them will be stopped.
+    </p>
+    <div id="settingsStreamsList" style="display:flex;flex-direction:column;gap:12px"></div>
+  </div>
+</div>
+
 </div><!-- /container -->
 
 <!-- ═══════════════ STREAM VIEWER MODAL ═══════════════ -->
@@ -576,6 +640,7 @@ table tr:hover{background:rgba(255,193,7,.05)}
 /* ─── CONFIG ──────────────────────────────── */
 const API = '/server/railytics_realtime_tracker_function';
 let currentTab = 0;
+let disabledStreams = JSON.parse(localStorage.getItem('railytics_disabled_streams') || '[]');
 let currentViewUrl = '';
 let framesPage = 1;
 let selectedCalDate = new Date();
@@ -632,7 +697,7 @@ let simFrames = [];
 
 function initSimData() {
   // Create sessions for active streams
-  simSessions = SIM_STREAMS.filter(s => s.active).map(s => {
+  simSessions = SIM_STREAMS.filter(s => s.active && !disabledStreams.includes(s.id)).map(s => {
     const fp = Math.floor(Math.random() * 500) + 200;
     const td = Math.floor(fp * (Math.random() * 0.15 + 0.05));
     const fd = fp - td;
@@ -778,6 +843,7 @@ function switchTab(idx) {
   if (idx === 1) { renderMultiStream(); startPolling(); }
   if (idx === 2) loadDashboard();
   if (idx === 3) loadFrames();
+  if (idx === 4) renderSettingsStreams();
   if (idx !== 1) stopPolling();
 }
 function switchInnerTab(idx, btn) {
@@ -815,7 +881,14 @@ function renderStreams() {
   renderSessionsAlert();
   const sessionMap = {};
   simSessions.forEach(s => sessionMap[s.stream_id] = s);
-  g.innerHTML = SIM_STREAMS.map(s => {
+  
+  const visibleStreams = SIM_STREAMS.filter(s => !disabledStreams.includes(s.id));
+  if (visibleStreams.length === 0) {
+    g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px;color:#aaa;"><span class="material-icons" style="font-size:64px;">warning</span><p style="margin-top:12px;">No active streams. Enable them in Settings.</p></div>';
+    return;
+  }
+  
+  g.innerHTML = visibleStreams.map(s => {
     const analyzing = !!sessionMap[s.id];
     const meta = s.youtube_metadata || {};
     return '<div class="card stream-card"><div class="yt-embed">' + (meta.is_live ? '<span class="live-badge"><span class="material-icons" style="font-size:.7rem">live_tv</span> LIVE</span>' : '') + '<iframe src="' + embedUrl(s.url) + '" loading="lazy" allow="autoplay;encrypted-media" allowfullscreen></iframe></div><div class="card-content" style="flex-grow:1"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><h3>' + s.name + '</h3><div style="display:flex;gap:4px;flex-wrap:wrap"><span class="chip success">Active</span>' + (meta.is_live ? '<span class="chip live">LIVE</span>' : '') + (analyzing ? '<span class="chip warning"><span class="material-icons" style="font-size:.7rem">play_arrow</span> Analyzing</span>' : '') + '</div></div>' + (meta.title ? '<p style="font-size:.85rem;font-weight:500;margin-bottom:4px">' + meta.title + '</p>' : '') + (meta.uploader ? '<p class="meta">Channel: ' + meta.uploader + (meta.view_count > 0 ? ' &bull; ' + meta.view_count.toLocaleString() + ' views' : '') + '</p>' : '') + '<p class="meta">' + (s.description || 'No description') + '</p></div><div style="padding:0 16px 16px;display:flex;justify-content:space-between;align-items:center"><button class="btn btn-outline btn-sm" onclick="openViewer(\'' + s.url + '\',\'' + s.name.replace(/'/g, "\\'") + '\')"><span class="material-icons" style="font-size:1rem">visibility</span> Watch Stream</button>' + (analyzing ? '<button class="btn btn-error btn-sm" onclick="stopStream(\'' + s.id + '\')"><span class="material-icons" style="font-size:1rem">stop</span> Stop Analysis</button>' : '<button class="btn btn-primary btn-sm" onclick="startStream(\'' + s.id + '\')"><span class="material-icons" style="font-size:1rem">play_arrow</span> Start Analysis</button>') + '</div></div>';
@@ -838,7 +911,11 @@ function stopStream(id) {
   renderStreams();
 }
 function startAllAnalysis() {
-  SIM_STREAMS.forEach(s => startStream(s.id));
+  SIM_STREAMS.forEach(s => {
+    if (!disabledStreams.includes(s.id)) {
+      startStream(s.id);
+    }
+  });
 }
 function stopAllAnalysis() {
   simSessions = [];
@@ -1429,9 +1506,61 @@ function loadFrames() {
   document.getElementById('framesPagination').innerHTML = pgHtml;
 }
 
+/* ═══════════════ SETTINGS ═══════════════ */
+function renderSettingsStreams() {
+  const el = document.getElementById('settingsStreamsList');
+  if (!el) return;
+  el.innerHTML = SIM_STREAMS.map(s => {
+    const isEnabled = !disabledStreams.includes(s.id);
+    return '<div class="settings-row" style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,193,7,0.1);border-radius:10px;transition:all 0.3s ease;">' +
+      '<div style="flex:1;min-width:0;margin-right:16px;">' +
+        '<h4 style="color:#fff;font-weight:500;font-size:0.95rem;margin-bottom:4px;">' + s.name + '</h4>' +
+        '<p style="color:#777;font-size:0.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + s.url + '">' + s.url + '</p>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
+        '<span style="font-size:0.8rem;color:' + (isEnabled ? '#FFC107' : '#555') + ';font-weight:600;">' + (isEnabled ? 'ENABLED' : 'DISABLED') + '</span>' +
+        '<label class="switch">' +
+          '<input type="checkbox" ' + (isEnabled ? 'checked' : '') + ' onchange="toggleStreamVisibility(\'' + s.id + '\', this.checked)">' +
+          '<span class="slider"></span>' +
+        '</label>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleStreamVisibility(id, enabled) {
+  if (enabled) {
+    disabledStreams = disabledStreams.filter(streamId => streamId !== id);
+  } else {
+    if (!disabledStreams.includes(id)) {
+      disabledStreams.push(id);
+    }
+    stopStream(id);
+  }
+  localStorage.setItem('railytics_disabled_streams', JSON.stringify(disabledStreams));
+  renderSettingsStreams();
+  loadFrameFilters();
+}
+
+function resetSettings() {
+  disabledStreams = [];
+  localStorage.removeItem('railytics_disabled_streams');
+  renderSettingsStreams();
+  loadFrameFilters();
+}
+
 function loadFrameFilters() {
   const sel = document.getElementById('frameFilter');
-  SIM_STREAMS.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; sel.appendChild(o); });
+  if (!sel) return;
+  sel.innerHTML = '<option value="">All locations</option>';
+  SIM_STREAMS.forEach(s => {
+    if (!disabledStreams.includes(s.id)) {
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = s.name;
+      sel.appendChild(o);
+    }
+  });
 }
 
 /* ═══════════════ INIT ═══════════════ */
