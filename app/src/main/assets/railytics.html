@@ -15,6 +15,31 @@
   <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
+    :root {
+      --header-height: 60px;
+      --container-padding: 10px;
+    }
+
+    @media (min-width: 600px) {
+      :root {
+        --header-height: 72px;
+        --container-padding: 14px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      :root {
+        --header-height: 88px;
+        --container-padding: 16px;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      :root {
+        --header-height: 100px;
+      }
+    }
+
     /* ═══════════════ RESET & BASE ═══════════════ */
     *,
     *::before,
@@ -180,7 +205,7 @@
     .container {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 10px
+      padding: var(--container-padding)
     }
 
     .tab-panel {
@@ -448,6 +473,12 @@
 
     /* ═══════════════ TABS (inner) ═══════════════ */
     .tabs-bar {
+      position: sticky;
+      top: var(--header-height);
+      z-index: 1100;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       display: flex;
       gap: 0;
       border-bottom: 1px solid rgba(255, 255, 255, .12);
@@ -455,7 +486,12 @@
       overflow-x: auto;
       white-space: nowrap;
       -webkit-overflow-scrolling: touch;
-      scrollbar-width: none
+      scrollbar-width: none;
+      
+      margin-left: calc(-1 * var(--container-padding));
+      margin-right: calc(-1 * var(--container-padding));
+      padding-left: var(--container-padding);
+      padding-right: var(--container-padding);
     }
 
     .tabs-bar::-webkit-scrollbar {
@@ -1577,7 +1613,7 @@
       }
 
       .container {
-        padding: 14px
+        padding: var(--container-padding)
       }
 
       .stat-grid {
@@ -1644,7 +1680,7 @@
       }
 
       .container {
-        padding: 16px
+        padding: var(--container-padding)
       }
 
       .stat-grid {
@@ -2005,7 +2041,7 @@
       SELECTION</button>
     <button class="menu-item" onclick="switchTab(1)"><span class="material-icons">analytics</span>REAL-TIME
       ANALYSIS</button>
-    <button class="menu-item" onclick="switchTab(2)"><span class="material-icons">dashboard</span>DASHBOARD</button>
+    <button class="menu-item" onclick="switchTab(2)"><span class="material-icons">dashboard</span>RAILWAY EVENTS</button>
     <button class="menu-item" onclick="switchTab(3)"><span class="material-icons">photo_library</span>FRAME
       GALLERY</button>
     <button class="menu-item" onclick="switchTab(4)"><span class="material-icons">settings</span>SETTINGS</button>
@@ -2242,8 +2278,12 @@
           style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
           <h2 style="font-weight:600;display:flex;align-items:center;gap:8px"><span
               class="material-icons">settings</span> Stream Settings</h2>
-          <button class="btn btn-outline btn-sm" onclick="resetSettings()"><span class="material-icons"
-              style="font-size:1rem">restore</span> Reset Defaults</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="resetSettings()"><span class="material-icons"
+                style="font-size:1rem">restore</span> Reset Defaults</button>
+            <button class="btn btn-error btn-sm" onclick="disableAllStreams()"><span class="material-icons"
+                style="font-size:1rem">block</span> Disable All</button>
+          </div>
         </div>
         <p style="color:#aaa;font-size:.9rem;margin-bottom:24px">
           Configure which streams are active. Disabled streams will be hidden from the STREAM SELECTION view, and any
@@ -3188,6 +3228,14 @@
     function resetSettings() {
       disabledStreams = [];
       localStorage.removeItem('railytics_disabled_streams');
+      renderSettingsStreams();
+      loadFrameFilters();
+    }
+
+    function disableAllStreams() {
+      disabledStreams = SIM_STREAMS.map(s => s.id);
+      stopAllAnalysis();
+      localStorage.setItem('railytics_disabled_streams', JSON.stringify(disabledStreams));
       renderSettingsStreams();
       loadFrameFilters();
     }
