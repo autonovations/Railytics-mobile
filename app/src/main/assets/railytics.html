@@ -127,6 +127,16 @@
       max-width: 28%
     }
 
+    .header .logo.up-logo {
+      max-width: 45%;
+    }
+
+    @media (max-width: 599px) {
+      .header .logo.up-logo {
+        height: 48px;
+      }
+    }
+
     .header-spacer {
       height: 60px
     }
@@ -1882,6 +1892,11 @@
         height: 32px;
         max-width: 25%
       }
+
+      .header .logo.up-logo {
+        height: 38px;
+        max-width: 45%;
+      }
     }
 
     /* ═══════════════ SETTINGS TOGGLE SWITCH ═══════════════ */
@@ -2192,7 +2207,7 @@
   <header class="header">
     <button class="hamburger" onclick="toggleDrawer()"><span class="material-icons"
         style="font-size:2.5rem">menu</span></button>
-    <img src="./up_logo.jpg" alt="UP" class="logo" />
+    <img src="./up_logo.jpg" alt="UP" class="logo up-logo" />
     <div style="flex:1"></div>
     <img src="./AN-logo.png" alt="AN" class="logo" />
   </header>
