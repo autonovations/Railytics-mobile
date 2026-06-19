@@ -135,6 +135,10 @@
       .header .logo.up-logo {
         height: 48px;
       }
+
+      .tab-header {
+        margin-top: 16px;
+      }
     }
 
     .header-spacer {
@@ -497,11 +501,13 @@
       white-space: nowrap;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
-      
+
       margin-left: calc(-1 * var(--container-padding));
       margin-right: calc(-1 * var(--container-padding));
       padding-left: var(--container-padding);
       padding-right: var(--container-padding);
+      padding-top: 10px;
+      padding-bottom: 10px;
     }
 
     .tabs-bar::-webkit-scrollbar {
@@ -910,7 +916,7 @@
 
     .frame-card img {
       width: 100%;
-      height: 200px;
+      aspect-ratio: 1 / 1;
       object-fit: cover;
       display: block;
       border-radius: 15px 15px 0 0
@@ -1009,7 +1015,8 @@
 
     /* ═══════════════ RECENT DETECTIONS TABLE ═══════════════ */
     .det-table-header {
-      display: none; /* hidden on mobile, shown on md+ */
+      display: none;
+      /* hidden on mobile, shown on md+ */
     }
 
     .det-table-header span {
@@ -1549,7 +1556,7 @@
       align-items: center;
       width: 100%;
       padding: 5px 0;
-      border-bottom: 1px solid rgba(255,255,255,.05);
+      border-bottom: 1px solid rgba(255, 255, 255, .05);
     }
 
     .det-cell:last-child {
@@ -1864,11 +1871,11 @@
         gap: 10px
       }
 
-      .settings-row > div:last-child {
+      .settings-row>div:last-child {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-top: 1px solid rgba(255,255,255,.05);
+        border-top: 1px solid rgba(255, 255, 255, .05);
         padding-top: 8px
       }
 
@@ -1876,6 +1883,11 @@
       .select {
         width: 100% !important;
         min-width: unset !important
+      }
+
+      .tabs-bar {
+        padding-top: 10px;
+        padding-bottom: 10px;
       }
 
       .tab-btn {
@@ -2098,14 +2110,14 @@
     /* Event Details Modal styles */
     .details-img-container {
       width: 100%;
-      height: 250px;
+      aspect-ratio: 1 / 1;
       border-radius: 10px;
       overflow: hidden;
       margin-bottom: 16px;
       border: 1px solid rgba(255, 193, 7, 0.3);
       background: #000;
     }
-    
+
     .details-img-container img {
       width: 100%;
       height: 100%;
@@ -2142,9 +2154,6 @@
     @media (min-width: 600px) {
       .details-grid {
         grid-template-columns: 1fr 1fr;
-      }
-      .details-img-container {
-        height: 320px;
       }
     }
 
@@ -2221,7 +2230,8 @@
       SELECTION</button>
     <button class="menu-item" onclick="switchTab(1)"><span class="material-icons">analytics</span>REAL-TIME
       ANALYSIS</button>
-    <button class="menu-item" onclick="switchTab(2)"><span class="material-icons">dashboard</span>RAILWAY EVENTS</button>
+    <button class="menu-item" onclick="switchTab(2)"><span class="material-icons">dashboard</span>RAILWAY
+      EVENTS</button>
     <button class="menu-item" onclick="switchTab(3)"><span class="material-icons">photo_library</span>FRAME
       GALLERY</button>
     <button class="menu-item" onclick="switchTab(4)"><span class="material-icons">settings</span>SETTINGS</button>
@@ -2234,8 +2244,8 @@
     <div class="tab-panel active" id="tab0">
       <div class="tab-header">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-video-play btn-sm" id="btnPlayAll" onclick="togglePlayAllStreams()"><span class="material-icons"
-              style="font-size:1rem">play_arrow</span> Play All</button>
+          <button class="btn btn-video-play btn-sm" id="btnPlayAll" onclick="togglePlayAllStreams()"><span
+              class="material-icons" style="font-size:1rem">play_arrow</span> Play All</button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary btn-sm" onclick="startAllAnalysis()"><span class="material-icons"
@@ -2629,13 +2639,30 @@
       }
       simRailwayEvents.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
 
+      // Generate a shuffled pool of image indices to minimize repetition
+      let frameImageIndices = [];
+      const totalFramesNeeded = 48;
+      while (frameImageIndices.length < totalFramesNeeded) {
+        const pool = Array.from({ length: 23 }, (_, idx) => idx + 1);
+        // Shuffle pool
+        for (let j = pool.length - 1; j > 0; j--) {
+          const k = Math.floor(Math.random() * (j + 1));
+          [pool[j], pool[k]] = [pool[k], pool[j]];
+        }
+        // Avoid immediate duplicates at the boundary of concatenation
+        if (frameImageIndices.length > 0 && frameImageIndices[frameImageIndices.length - 1] === pool[0]) {
+          [pool[0], pool[1]] = [pool[1], pool[0]];
+        }
+        frameImageIndices = frameImageIndices.concat(pool);
+      }
+
       // Generate frames
-      for (let i = 0; i < 48; i++) {
+      for (let i = 0; i < totalFramesNeeded; i++) {
         const d = new Date();
         d.setMinutes(d.getMinutes() - i * 3);
         const hasTrain = Math.random() > 0.3;
         simFrames.push({
-          filename: './train_frame' + ((i % 6) + 1) + '.png',
+          filename: './train_frame' + frameImageIndices[i] + '.png',
           timestamp: d.toISOString(),
           size: Math.floor(Math.random() * 500000) + 50000,
           has_trains: hasTrain,
@@ -2756,12 +2783,12 @@
         // Keep the live badge if present
         const liveBadge = container.querySelector('.live-badge');
         const liveBadgeHtml = liveBadge ? liveBadge.outerHTML : '';
-        
-        container.innerHTML = 
+
+        container.innerHTML =
           liveBadgeHtml +
           '<div class="yt-loading-overlay" id="loading-' + id + '">' +
-            '<div class="yt-spinner"></div>' +
-            '<span style="font-size:0.75rem;font-weight:600;color:#aaa;text-transform:uppercase;margin-top:8px">Loading Stream...</span>' +
+          '<div class="yt-spinner"></div>' +
+          '<span style="font-size:0.75rem;font-weight:600;color:#aaa;text-transform:uppercase;margin-top:8px">Loading Stream...</span>' +
           '</div>' +
           '<iframe id="iframe-' + id + '" src="' + embedUrl(url) + '" allow="autoplay;encrypted-media" allowfullscreen style="opacity: 0; transition: opacity 0.35s ease-in-out; position: absolute; top:0; left:0; width:100%; height:100%; border:none;" onload="onIframeLoaded(\'' + id + '\')"></iframe>';
       }
@@ -2791,7 +2818,7 @@
     function togglePlayAllStreams() {
       const btn = document.getElementById('btnPlayAll');
       if (!btn) return;
-      
+
       if (!areStreamsPlaying) {
         areStreamsPlaying = true;
         btn.innerHTML = '<span class="material-icons" style="font-size:1rem">pause</span> Pause All';
@@ -2819,13 +2846,13 @@
         const videoId = getVideoId(url);
         const thumbnailUrl = videoId ? 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg' : '';
         if (thumbnailUrl) {
-          container.innerHTML = 
+          container.innerHTML =
             (meta.is_live ? '<span class="live-badge"><span class="material-icons" style="font-size:.7rem">live_tv</span> LIVE</span>' : '') +
             '<div class="yt-embed-facade" style="background-image: url(\'' + thumbnailUrl + '\');" onclick="loadLiveStreamIframe(\'' + id + '\', \'' + url + '\')">' +
-              '<div class="facade-overlay">' +
-                '<span class="material-icons play-icon">play_circle_filled</span>' +
-                '<span class="load-text">Load Live Stream</span>' +
-              '</div>' +
+            '<div class="facade-overlay">' +
+            '<span class="material-icons play-icon">play_circle_filled</span>' +
+            '<span class="load-text">Load Live Stream</span>' +
+            '</div>' +
             '</div>';
         }
       }
@@ -2846,7 +2873,7 @@
         btn.innerHTML = '<span class="material-icons" style="font-size:1rem">play_arrow</span> Play All';
         btn.className = 'btn btn-video-play btn-sm';
       }
-      
+
       const g = document.getElementById('streamGrid');
       renderSessionsAlert();
       const sessionMap = {};
@@ -2863,38 +2890,38 @@
         const meta = s.youtube_metadata || {};
         const videoId = getVideoId(s.url);
         const thumbnailUrl = videoId ? 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg' : '';
-        
+
         return '<div class="card stream-card">' +
           '<div class="yt-embed" id="embed-container-' + s.id + '">' +
-            (meta.is_live ? '<span class="live-badge"><span class="material-icons" style="font-size:.7rem">live_tv</span> LIVE</span>' : '') +
-            (thumbnailUrl ? 
-              '<div class="yt-embed-facade" style="background-image: url(\'' + thumbnailUrl + '\');" onclick="loadLiveStreamIframe(\'' + s.id + '\', \'' + s.url + '\')">' +
-                '<div class="facade-overlay">' +
-                  '<span class="material-icons play-icon">play_circle_filled</span>' +
-                  '<span class="load-text">Load Live Stream</span>' +
-                '</div>' +
-              '</div>' : 
-              '<iframe src="' + embedUrl(s.url) + '" loading="lazy" allow="autoplay;encrypted-media" allowfullscreen></iframe>'
-            ) +
+          (meta.is_live ? '<span class="live-badge"><span class="material-icons" style="font-size:.7rem">live_tv</span> LIVE</span>' : '') +
+          (thumbnailUrl ?
+            '<div class="yt-embed-facade" style="background-image: url(\'' + thumbnailUrl + '\');" onclick="loadLiveStreamIframe(\'' + s.id + '\', \'' + s.url + '\')">' +
+            '<div class="facade-overlay">' +
+            '<span class="material-icons play-icon">play_circle_filled</span>' +
+            '<span class="load-text">Load Live Stream</span>' +
+            '</div>' +
+            '</div>' :
+            '<iframe src="' + embedUrl(s.url) + '" loading="lazy" allow="autoplay;encrypted-media" allowfullscreen></iframe>'
+          ) +
           '</div>' +
           '<div class="card-content" style="flex-grow:1">' +
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
-              '<h3>' + s.name + '</h3>' +
-              '<div style="display:flex;gap:4px;flex-wrap:wrap" id="chips-container-' + s.id + '">' +
-                '<span class="chip success">Active</span>' +
-                (meta.is_live ? '<span class="chip live">LIVE</span>' : '') +
-                (analyzing ? '<span class="chip warning"><span class="material-icons" style="font-size:.7rem">play_arrow</span> Analyzing</span>' : '') +
-              '</div>' +
-            '</div>' +
-            (meta.title ? '<p style="font-size:.85rem;font-weight:500;margin-bottom:4px">' + meta.title + '</p>' : '') +
-            (meta.uploader ? '<p class="meta">Channel: ' + meta.uploader + (meta.view_count > 0 ? ' &bull; ' + meta.view_count.toLocaleString() + ' views' : '') + '</p>' : '') +
-            '<p class="meta">' + (s.description || 'No description') + '</p>' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+          '<h3>' + s.name + '</h3>' +
+          '<div style="display:flex;gap:4px;flex-wrap:wrap" id="chips-container-' + s.id + '">' +
+          '<span class="chip success">Active</span>' +
+          (meta.is_live ? '<span class="chip live">LIVE</span>' : '') +
+          (analyzing ? '<span class="chip warning"><span class="material-icons" style="font-size:.7rem">play_arrow</span> Analyzing</span>' : '') +
+          '</div>' +
+          '</div>' +
+          (meta.title ? '<p style="font-size:.85rem;font-weight:500;margin-bottom:4px">' + meta.title + '</p>' : '') +
+          (meta.uploader ? '<p class="meta">Channel: ' + meta.uploader + (meta.view_count > 0 ? ' &bull; ' + meta.view_count.toLocaleString() + ' views' : '') + '</p>' : '') +
+          '<p class="meta">' + (s.description || 'No description') + '</p>' +
           '</div>' +
           '<div style="padding:0 16px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px" id="actions-container-' + s.id + '">' +
-            '<button class="btn btn-outline btn-sm" onclick="openViewer(\'' + s.url + '\',\'' + s.name.replace(/'/g, "\\'") + '\')"><span class="material-icons" style="font-size:1rem">visibility</span> Watch Stream</button>' +
-            (analyzing ? '<button class="btn btn-error btn-sm" onclick="stopStream(\'' + s.id + '\')"><span class="material-icons" style="font-size:1rem">stop</span> Stop Analysis</button>' : '<button class="btn btn-primary btn-sm" onclick="startStream(\'' + s.id + '\')"><span class="material-icons" style="font-size:1rem">play_arrow</span> Start Analysis</button>') +
+          '<button class="btn btn-outline btn-sm" onclick="openViewer(\'' + s.url + '\',\'' + s.name.replace(/'/g, "\\'") + '\')"><span class="material-icons" style="font-size:1rem">visibility</span> Watch Stream</button>' +
+          (analyzing ? '<button class="btn btn-error btn-sm" onclick="stopStream(\'' + s.id + '\')"><span class="material-icons" style="font-size:1rem">stop</span> Stop Analysis</button>' : '<button class="btn btn-primary btn-sm" onclick="startStream(\'' + s.id + '\')"><span class="material-icons" style="font-size:1rem">play_arrow</span> Start Analysis</button>') +
           '</div>' +
-        '</div>';
+          '</div>';
       }).join('');
     }
 
@@ -2904,11 +2931,11 @@
       if (!stream) return;
 
       const isAnalyzing = simSessions.some(s => s.stream_id === id);
-      
+
       const chipsContainer = document.getElementById('chips-container-' + id);
       if (chipsContainer) {
         const meta = stream.youtube_metadata || {};
-        chipsContainer.innerHTML = 
+        chipsContainer.innerHTML =
           '<span class="chip success">Active</span>' +
           (meta.is_live ? '<span class="chip live">LIVE</span>' : '') +
           (isAnalyzing ? '<span class="chip warning"><span class="material-icons" style="font-size:.7rem">play_arrow</span> Analyzing</span>' : '');
@@ -2916,10 +2943,10 @@
 
       const actionsContainer = document.getElementById('actions-container-' + id);
       if (actionsContainer) {
-        actionsContainer.innerHTML = 
+        actionsContainer.innerHTML =
           '<button class="btn btn-outline btn-sm" onclick="openViewer(\'' + stream.url + '\',\'' + stream.name.replace(/'/g, "\\'") + '\')"><span class="material-icons" style="font-size:1rem">visibility</span> Watch Stream</button>' +
-          (isAnalyzing ? 
-            '<button class="btn btn-error btn-sm" onclick="stopStream(\'' + id + '\')"><span class="material-icons" style="font-size:1rem">stop</span> Stop Analysis</button>' : 
+          (isAnalyzing ?
+            '<button class="btn btn-error btn-sm" onclick="stopStream(\'' + id + '\')"><span class="material-icons" style="font-size:1rem">stop</span> Stop Analysis</button>' :
             '<button class="btn btn-primary btn-sm" onclick="startStream(\'' + id + '\')"><span class="material-icons" style="font-size:1rem">play_arrow</span> Start Analysis</button>'
           );
       }
@@ -2936,12 +2963,12 @@
       simFramesProcessed[id] = 0; simTrainsDetected[id] = 0; simFramesDiscarded[id] = 0;
       updateStreamAnalysisUI(id);
     }
-    
+
     function stopStream(id) {
       simSessions = simSessions.filter(s => s.stream_id !== id);
       updateStreamAnalysisUI(id);
     }
-    
+
     function startAllAnalysis() {
       SIM_STREAMS.forEach(s => {
         if (!disabledStreams.includes(s.id)) {
@@ -2949,7 +2976,7 @@
         }
       });
     }
-    
+
     function stopAllAnalysis() {
       const activeIds = simSessions.map(s => s.stream_id);
       simSessions = [];
@@ -2987,14 +3014,14 @@
 
       // Asignar imagen cíclicamente basándose en el ID del evento o nombre para consistencia
       const hash = eventId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const imgIdx = (hash % 6) + 1;
+      const imgIdx = (hash % 23) + 1;
       imgEl.src = './train_frame' + imgIdx + '.png';
 
       const fmt = ts => { try { return new Date(ts).toLocaleString(); } catch (_) { return '—'; } };
       const fmtDur = s => { if (s == null) return 'Active'; const m = Math.floor(s / 60), sec = s % 60; return m + 'm ' + sec + 's'; };
 
       titleEl.innerHTML = '<span class="material-icons">train</span> Event Details: ' + (event.reporting_marks[0] || 'Unknown train');
-      
+
       contentEl.innerHTML = `
         <div class="details-item">
           <div class="details-item-label">📍 Location</div>
@@ -3604,11 +3631,13 @@
       }
       const fmt = ts => { try { return new Date(ts).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); } catch (_) { return '—'; } };
       const fmtDur = s => { if (s == null) return '—'; const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = Math.floor(s % 60); return h > 0 ? h + 'h ' + m + 'm ' + sec + 's' : m > 0 ? m + 'm ' + sec + 's' : sec + 's'; };
-      
+
       el.innerHTML = '<div class="table-responsive"><table><tr><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">schedule</span> Start</span></th><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">schedule</span> End</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">access_time</span> Duration</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">train</span> Frames</span></th><th style="text-align:center">Units</th><th><span style="display:flex;align-items:center;gap:4px"><span class="material-icons" style="font-size:1rem">badge</span> Reporting Marks</span></th><th style="text-align:center"><span style="display:flex;align-items:center;gap:4px;justify-content:center"><span class="material-icons" style="font-size:1rem">image</span> Last Detection</span></th><th style="text-align:center">Video</th><th style="text-align:center">Action</th></tr>' + events.slice(0, 50).map((e, idx) => {
         const stream = SIM_STREAMS.find(st => st.name === e.stream_name);
         const videoClickHtml = stream ? 'onclick="openViewer(\'' + stream.url + '\',\'' + stream.name.replace(/'/g, "\\'") + '\')"' : 'disabled';
-        const imgPath = './train_frame' + ((idx % 6) + 1) + '.png';
+        const hash = e.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const imgIdx = (hash % 23) + 1;
+        const imgPath = './train_frame' + imgIdx + '.png';
         return '<tr style="transition:.2s">' +
           '<td data-label="Start"><div class="td-content">' + fmt(e.start_time) + '</div></td>' +
           '<td data-label="End"><div class="td-content">' + (e.end_time ? fmt(e.end_time) : '— (active)') + '</div></td>' +
@@ -3616,7 +3645,7 @@
           '<td data-label="Frames" style="text-align:center"><div class="td-content">' + (e.frames_count || 0) + '</div></td>' +
           '<td data-label="Units" style="text-align:center"><div class="td-content">' + (e.units_count || 0) + '</div></td>' +
           '<td data-label="Reporting Marks"><div class="td-content">' + (e.reporting_marks || []).slice(0, 6).map(r => '<span class="chip primary" style="margin:1px">' + r + '</span>').join('') + ((e.reporting_marks || []).length > 6 ? '<span class="chip primary">+' + (e.reporting_marks.length - 6) + '</span>' : '') + '</div></td>' +
-          '<td data-label="Last Detection" style="text-align:center"><div class="td-content"><img src="' + imgPath + '" style="width:80px;height:50px;object-fit:cover;border-radius:4px;border:1px solid rgba(255,193,7,.3);cursor:pointer;margin:0 auto;display:block" onclick="openDetailsModal(\'' + e.id + '\')" /></div></td>' +
+          '<td data-label="Last Detection" style="text-align:center"><div class="td-content"><img src="' + imgPath + '" style="width:50px;height:50px;object-fit:cover;border-radius:4px;border:1px solid rgba(255,193,7,.3);cursor:pointer;margin:0 auto;display:block" onclick="openDetailsModal(\'' + e.id + '\')" /></div></td>' +
           '<td data-label="Video" style="text-align:center"><div class="td-content"><button class="btn btn-outline btn-sm" title="View event video" ' + videoClickHtml + '><span class="material-icons" style="font-size:1rem">play_arrow</span></button></div></td>' +
           '<td data-label="Action" style="text-align:center"><div class="td-content"><button class="btn btn-primary btn-sm" onclick="openDetailsModal(\'' + e.id + '\')"><span class="material-icons" style="font-size:.9rem">search</span> View Details</button></div></td>' +
           '</tr>';
